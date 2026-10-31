@@ -28,7 +28,8 @@ pipeline {
         
 
 
-stage('Login and Push to Docker Hub') {
+
+stage('Docker Hub Authentication Test') {
     steps {
         withCredentials([
             string(
@@ -39,46 +40,26 @@ stage('Login and Push to Docker Hub') {
             powershell '''
                 $ErrorActionPreference = "Stop"
 
-                Write-Host "Logging into Docker Hub..."
+                Write-Host "Token length: $($env:DH_TOKEN.Length)"
+
+                if ($env:DH_TOKEN.Length -lt 20) {
+                    throw "Token appears incomplete"
+                }
 
                 $env:DH_TOKEN | docker login `
                     --username harini2926 `
                     --password-stdin
 
                 if ($LASTEXITCODE -ne 0) {
-                    throw "Docker Hub login failed"
+                    throw "Docker authentication failed"
                 }
 
-                Write-Host "Docker Hub login successful!"
-
-                $tag = "$($env:DOCKERHUB_REPO):$($env:BUILD_NUMBER)"
-                $latest = "$($env:DOCKERHUB_REPO):latest"
-
-                docker push $tag
-
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Docker push failed"
-                }
-
-                docker tag $tag $latest
-
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Docker tag failed"
-                }
-
-                docker push $latest
-
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Latest push failed"
-                }
-
-                Write-Host "Images pushed successfully!"
-
-                docker logout
+                Write-Host "DOCKER AUTHENTICATION SUCCESSFUL"
             '''
         }
     }
 }
+
 
         stage('Deploy to Kubernetes') {
             steps {
