@@ -1,60 +1,117 @@
 
-stage('Build, Login and Push Docker Image') {
-    steps {
-        withCredentials([
-            string(
-                credentialsId: 'nexora-docker-token',
-                variable: 'DH_TOKEN'
-            )
-        ]) {
-            powershell '''
-                $ErrorActionPreference = "Stop"
+pipeline {
+    agent any
 
-                Write-Host "STEP 1: Docker Hub Login"
+    options {
+        skipDefaultCheckout(true)
+    }
 
-                $env:DH_TOKEN | docker login `
-                    --username harini2926 `
-                    --password-stdin
+    environment {
+        DOCKERHUB_REPO = 'harini2926/nexora-web'
+    }
 
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Docker login failed"
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo 'Nexora source downloaded successfully'
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([
+                    string(
+                        credentialsId: 'nexora-docker-token',
+                        variable: 'DH_TOKEN'
+                    )
+                ]) {
+                    powershell '''
+                        $ErrorActionPreference = "Stop"
+
+                        Write-Host "Logging into Docker Hub..."
+
+                        $env:DH_TOKEN | docker login --username harini2926 --password-stdin
+
+                        if ($LASTEXITCODE -ne 0) {
+                            throw "Docker login failed"
+                        }
+
+                        Write-Host "Docker login successful"
+                    '''
                 }
+            }
+        }
 
-                Write-Host "STEP 2: Building Nexora Image"
+        stage('Build Docker Image') {
+            steps {
+                bat 'docker build -t "%DOCKERHUB_REPO%:%BUILD_NUMBER%" .'
 
-                $tag = "$($env:DOCKERHUB_REPO):$($env:BUILD_NUMBER)"
-                $latest = "$($env:DOCKERHUB_REPO):latest"
+                bat 'docker tag "%DOCKERHUB_REPO%:%BUILD_NUMBER%" "%DOCKERHUB_REPO%:latest"'
+            }
+        }
 
-                docker build -t $tag .
+        stage('Push to Docker Hub') {
+            steps {
+                bat 'docker push "%DOCKERHUB_REPO%:%BUILD_NUMBER%"'
 
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Docker build failed"
-                }
+                bat 'docker push "%DOCKERHUB_REPO%:latest"'
+            }
+        }
 
-                Write-Host "STEP 3: Pushing Image"
+        stage('Deploy to Kubernetes') {
+            steps {
+                powershell '''
+                    $ErrorActionPreference = "Stop"
 
-                docker push $tag
+                    Write-Host "Deploying Nexora..."
 
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Docker push failed"
-                }
+                    kubectl apply -f k8s/pvc.yaml
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "PVC failed"
+                    }
 
-                docker tag $tag $latest
+                    kubectl apply -f k8s/service.yaml
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Service failed"
+                    }
 
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Docker tag failed"
-                }
+                    $image = "$($env:DOCKERHUB_REPO):$($env:BUILD_NUMBER)"
 
-                docker push $latest
+                    $yaml = Get-Content "k8s/deployment.yaml" -Raw
+                    $yaml = $yaml.Replace("__IMAGE__", $image)
 
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Latest image push failed"
-                }
+                    $yaml | kubectl apply -f -
 
-                Write-Host "NEXORA IMAGE PUSHED SUCCESSFULLY"
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Deployment failed"
+                    }
 
-                docker logout
-            '''
+                    kubectl rollout status deployment/nexora-web --timeout=180s
+
+                    if ($LASTEXITCODE -ne 0) {
+                        throw "Kubernetes rollout failed"
+                    }
+
+                    Write-Host "NEXORA DEPLOYED SUCCESSFULLY!"
+                '''
+            }
+        }
+
+    }
+
+    post {
+        success {
+            echo 'SUCCESS: Nexora CI/CD pipeline completed!'
+        }
+
+        failure {
+            echo 'FAILED: Check Console Output'
+        }
+
+        always {
+            echo 'Nexora pipeline execution finished'
         }
     }
 }
