@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community — Nexora</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <style>
+        body {
+            font-family: Inter, "Segoe UI", sans-serif;
+            background: #05050a;
+            color: white;
+            margin: 0;
+        }
+        .wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 80px 40px 120px;
+        }
+        .back {
+            color: rgba(255,255,255,0.65);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back:hover { color: white; }
+
+        h1 {
+            font-size: 64px;
+            margin: 40px 0 20px;
+        }
+        .sub {
+            color: rgba(255,255,255,0.65);
+            font-size: 20px;
+            max-width: 720px;
+            line-height: 1.7;
+            margin-bottom: 60px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        .card {
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.02);
+            transition: 0.25s ease;
+            text-decoration: none;
+            color: white;
+            display: block;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(139,92,246,0.5);
+            background: rgba(139,92,246,0.06);
+        }
+        .card .icon {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        .card h3 {
+            margin: 0 0 12px;
+            font-size: 24px;
+        }
+        .card p {
+            color: rgba(255,255,255,0.6);
+            line-height: 1.7;
+            margin: 0 0 18px;
+            font-size: 15px;
+        }
+        .card .cta {
+            color: #a78bfa;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 700px) {
+            .grid { grid-template-columns: 1fr; }
+            h1 { font-size: 48px; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+
+    <a class="back" href="{{ url_for('landing') }}">← Back to Nexora</a>
+
+    <h1>Community</h1>
+    <p class="sub">
+        Nexora is built in the open. Join thousands of creators, share
+        your games, and shape the engine with us.
+    </p>
+
+    <div class="grid">
+
+        <!-- Discord -->
+        <a class="card" href="https://discord.gg/" target="_blank" rel="noopener">
+            <div class="icon">💬</div>
+            <h3>Discord Server</h3>
+            <p>Chat with other creators, get help with your project,
+               and share what you're building.</p>
+            <span class="cta">Join the server →</span>
+        </a>
+
+        <!-- GitHub -->
+        <a class="card" href="https://github.com/" target="_blank" rel="noopener">
+            <div class="icon">🐙</div>
+            <h3>GitHub</h3>
+            <p>Report bugs, request features, or contribute code.
+               Nexora's engine and tooling live here.</p>
+            <span class="cta">Open the repo →</span>
+        </a>
+
+        <!-- YouTube -->
+        <a class="card" href="https://youtube.com/" target="_blank" rel="noopener">
+            <div class="icon">▶</div>
+            <h3>YouTube</h3>
+            <p>Watch tutorials, devlogs, and full walkthroughs of
+               building a game in Nexora from scratch.</p>
+            <span class="cta">Watch tutorials →</span>
+        </a>
+
+        <!-- Forum -->
+        <a class="card" href="#" target="_blank" rel="noopener">
+            <div class="icon">📖</div>
+            <h3>Forum</h3>
+            <p>Long-form discussions, code snippets, and community-made
+               tutorials — all in one place.</p>
+            <span class="cta">Browse threads →</span>
+        </a>
+
+    </div>
+
+</div>
+</body>
+</html>

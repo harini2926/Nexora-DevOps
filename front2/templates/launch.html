@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opening Nexora…</title>
+    <style>
+        html, body {
+            background: #05050a;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+        .screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Inter, "Segoe UI", sans-serif;
+            color: white;
+        }
+        .box {
+            text-align: center;
+            padding: 60px;
+            max-width: 480px;
+        }
+        .badge {
+            width: 72px;
+            height: 72px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            font-weight: 900;
+            box-shadow: 0 0 40px rgba(124,58,237,0.55);
+            margin-bottom: 28px;
+        }
+        h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin: 0 0 10px;
+        }
+        p {
+            color: rgba(255,255,255,0.6);
+            font-size: 15px;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.08);
+            border-top-color: #a78bfa;
+            animation: spin 0.9s linear infinite;
+            margin: 32px auto 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .ready {
+            display: none;
+            margin-top: 32px;
+            color: #86efac;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="screen">
+        <div class="box">
+            <div class="badge">N</div>
+            <h1>Opening Nexora…</h1>
+            <p>The editor is starting in a new window.</p>
+            <div class="spinner" id="spinner"></div>
+            <div class="ready" id="ready">
+                ✓ Editor opened. You can close this tab.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // After 2.5 s, the editor window has almost certainly opened.
+        // Swap the spinner for the "ready" message.
+        setTimeout(() => {
+            const sp = document.getElementById('spinner');
+            const rd = document.getElementById('ready');
+            if (sp) sp.style.display = 'none';
+            if (rd) rd.style.display = 'block';
+        }, 2500);
+
+        // Try to close the tab so the user is left with only the
+        // editor window. Chrome blocks this for user-opened tabs,
+        // so this silently does nothing in that case — that's fine.
+        setTimeout(() => {
+            window.close();
+        }, 3500);
+    </script>
+</body>
+</html>

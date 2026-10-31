@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About — Nexora</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <style>
+        body { font-family: Inter, "Segoe UI", sans-serif;
+               background: #05050a; color: white; margin: 0; }
+        .wrap { max-width: 900px; margin: 0 auto; padding: 80px 40px 120px; }
+        .back { color: rgba(255,255,255,0.65); text-decoration: none;
+                font-size: 14px; }
+        .back:hover { color: white; }
+        h1 { font-size: 64px; margin: 40px 0 20px; }
+        .sub { color: rgba(255,255,255,0.7); font-size: 20px;
+               line-height: 1.8; margin-bottom: 40px; }
+        .sub strong { color: white; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 60px;
+        }
+        .stat {
+            padding: 32px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.02);
+            text-align: center;
+        }
+        .stat .num { font-size: 40px; font-weight: 800;
+                     color: #a78bfa; }
+        .stat .lbl { color: rgba(255,255,255,0.55); font-size: 14px;
+                     margin-top: 8px; letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <a class="back" href="{{ url_for('landing') }}">← Back to Nexora</a>
+    <h1>About Nexora</h1>
+
+    <p class="sub">
+        <strong>Nexora</strong> is an experimental AI-powered game engine
+        built by a small team of developers and designers. Our goal is
+        simple: make it possible to go from a text idea to a playable
+        game without switching tools.
+    </p>
+
+    <p class="sub">
+        The engine is written in C++ with Dear ImGui and OpenGL, with a
+        Python scripting layer for gameplay logic. Everything is saved
+        as plain JSON so your work is portable and diffable.
+    </p>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="num">v0.1</div>
+            <div class="lbl">EARLY ACCESS</div>
+        </div>
+        <div class="stat">
+            <div class="num">C++</div>
+            <div class="lbl">CORE ENGINE</div>
+        </div>
+        <div class="stat">
+            <div class="num">Python</div>
+            <div class="lbl">GAMEPLAY</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

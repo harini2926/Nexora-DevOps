@@ -1,0 +1,19 @@
+<<<<<<< Updated upstream
+venv/
+.venv/
+=======
+.env
+**/.env
+*.db
+*.sqlite
+*.sqlite3
+zip.zip
+build/
+.vs/
+>>>>>>> Stashed changes
+__pycache__/
+*.pyc
+.env
+.vscode/
+.idea/
+database/*.db

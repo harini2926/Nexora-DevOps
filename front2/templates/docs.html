@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docs — Nexora</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+    <style>
+        body { font-family: Inter, "Segoe UI", sans-serif;
+               background: #05050a; color: white; margin: 0; }
+        .wrap { max-width: 900px; margin: 0 auto; padding: 80px 40px 120px; }
+        .back { color: rgba(255,255,255,0.65); text-decoration: none;
+                font-size: 14px; }
+        .back:hover { color: white; }
+        h1 { font-size: 64px; margin: 40px 0 20px; }
+        .sub { color: rgba(255,255,255,0.65); font-size: 20px;
+               line-height: 1.7; margin-bottom: 60px; }
+        h2 { font-size: 26px; margin: 48px 0 16px; }
+        p, li { color: rgba(255,255,255,0.7); line-height: 1.8;
+                font-size: 16px; }
+        code {
+            font-family: Consolas, "SF Mono", monospace;
+            background: rgba(255,255,255,0.06);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        pre {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 24px;
+            overflow-x: auto;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <a class="back" href="{{ url_for('landing') }}">← Back to Nexora</a>
+    <h1>Documentation</h1>
+    <p class="sub">
+        Get up to speed with Nexora in a few minutes.
+    </p>
+
+    <h2>1. Create an account</h2>
+    <p>Click <a href="{{ url_for('register') }}"
+        style="color:#a78bfa;">Register</a> to make your free account.
+       Login with Google or email.</p>
+
+    <h2>2. Start a project</h2>
+    <p>From the dashboard, click <code>Create New Project</code>.
+       Pick a template (2D, 3D, Visual Novel or AI Interactive) and
+       give it a name.</p>
+
+    <h2>3. Edit the scene</h2>
+    <p>Drag objects on the canvas. Use the Inspector to change
+       position, rotation and scale. Middle-mouse pans, scroll zooms.</p>
+
+    <h2>4. Write gameplay scripts</h2>
+    <p>Every scene folder has a <code>Scripts/</code> directory.
+       Nexora runs Python files attached to objects.</p>
+
+    <pre>import nexora
+
+class PlayerController(nexora.Component):
+    def start(self):
+        self.speed = 250
+
+    def update(self, dt):
+        axis = nexora.input.axis("Horizontal")
+        self.transform.position.x += axis * self.speed * dt</pre>
+
+    <h2>5. Save and share</h2>
+    <p>Hit <code>Save Scene</code>. Your scene is written to
+       <code>Scenes/Main.scene</code> as JSON. Commit it, share it,
+       diff it.</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome — Nexora</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+
+<div class="auth-screen">
+
+    <div class="auth-box">
+
+        <div class="auth-brand">
+            <div class="brand-icon">N</div>
+            <strong>Nexora</strong>
+        </div>
+
+        <h1>Welcome to Nexora</h1>
+        <p class="auth-description">
+            {% if provider == 'google' %}
+                One more step. Choose your username and tell us about
+                yourself so we can personalize your workspace.
+            {% else %}
+                You're verified. Tell us a bit about yourself.
+            {% endif %}
+        </p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('welcome') }}">
+
+            {% if provider == 'google' %}
+                <label>Username</label>
+                <input type="text"
+                       name="username"
+                       placeholder="Choose a username"
+                       required>
+
+                <label>Password</label>
+                <input type="password"
+                       name="password"
+                       placeholder="At least 8 characters"
+                       required>
+            {% endif %}
+
+            <label>Full Name</label>
+            <input type="text"
+                   name="full_name"
+                   placeholder="Your full name"
+                   required>
+
+            <label>Age (optional)</label>
+            <input type="number"
+                   name="age"
+                   min="1" max="120"
+                   placeholder="e.g. 24">
+
+            <label>Country (optional)</label>
+            <input type="text"
+                   name="country"
+                   placeholder="e.g. India">
+
+            <label>Short Bio (optional)</label>
+            <input type="text"
+                   name="bio"
+                   placeholder="What kind of games do you want to build?">
+
+            <button type="submit" class="auth-submit">
+                Finish setup <span>→</span>
+            </button>
+
+        </form>
+
+    </div>
+</div>
+
+</body>
+</html>

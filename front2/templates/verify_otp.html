@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify — Nexora</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+
+<div class="auth-screen">
+
+    <a href="{{ url_for('index') }}" class="auth-back">← Nexora</a>
+
+    <div class="auth-box">
+
+        <div class="auth-brand">
+            <div class="brand-icon">N</div>
+            <strong>Nexora</strong>
+        </div>
+
+        <h1>Check your inbox</h1>
+        <p class="auth-description">
+            We sent a 6-digit code to <strong>{{ email }}</strong>.
+            It expires in 10 minutes.
+        </p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('verify_otp_page') }}">
+
+            <label>Verification Code</label>
+            <input type="text"
+                   name="code"
+                   placeholder="000000"
+                   maxlength="6"
+                   style="letter-spacing: 8px; text-align: center;
+                          font-size: 22px;"
+                   required>
+
+            <button type="submit" class="auth-submit">
+                Verify <span>→</span>
+            </button>
+
+        </form>
+
+        <p class="auth-switch">
+            Wrong email?
+            <a href="{{ url_for('login') }}">Try again</a>
+        </p>
+
+    </div>
+</div>
+
+</body>
+</html>

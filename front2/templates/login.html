@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Nexora</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body>
+
+<div class="auth-screen">
+
+    <a href="{{ url_for('index') }}" class="auth-back">
+        ← Nexora
+    </a>
+
+    <div class="auth-box">
+
+        <div class="auth-brand">
+            <div class="brand-icon">N</div>
+            <strong>Nexora</strong>
+        </div>
+
+        <h1>Welcome back</h1>
+        <p class="auth-description">
+            Sign in to continue building your next game.
+        </p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <!-- Google button submits to /auth/google/email -->
+        <a href="{{ url_for('google_email_page') }}"
+           class="google-login">
+
+            <span class="google-g">G</span>
+            Continue with Google
+
+        </a>
+
+        <div class="or-divider">
+            <span></span>
+            OR
+            <span></span>
+        </div>
+
+        <form method="POST" action="{{ url_for('login') }}">
+
+            <label>Email or Username</label>
+            <input type="text"
+                   name="identifier"
+                   placeholder="you@example.com or username"
+                   required>
+
+            <label>Password</label>
+            <input type="password"
+                   name="password"
+                   placeholder="Your password"
+                   required>
+
+            <button type="submit" class="auth-submit">
+                Sign in <span>→</span>
+            </button>
+
+        </form>
+
+        <p class="auth-switch">
+            Don't have an account?
+            <a href="{{ url_for('register') }}">Create one</a>
+        </p>
+
+    </div>
+</div>
+
+</body>
+</html>
