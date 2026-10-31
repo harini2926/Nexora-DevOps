@@ -19,30 +19,27 @@ pipeline {
             }
         }
 
-        stage('Docker Login') {
-            steps {
-                withCredentials([
-                    string(
-                        credentialsId: 'nexora-docker-token',
-                        variable: 'DH_TOKEN'
-                    )
-                ]) {
-                    powershell '''
-                        $ErrorActionPreference = "Stop"
+        stage('Docker Login Check') {
+    steps {
+        withCredentials([string(credentialsId: 'nexora-docker-token', variable: 'DH_TOKEN')]) {
+            powershell '''
+                $token = $env:DH_TOKEN.Trim()
 
-                        Write-Host "Logging into Docker Hub..."
+                $sha = [Security.Cryptography.SHA256]::Create()
+                $bytes = $sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($token))
+                $hash = [BitConverter]::ToString($bytes).Replace("-", "")
 
-                        $env:DH_TOKEN | docker login --username harini2926 --password-stdin
+                Write-Host "Jenkins fingerprint: $hash"
 
-                        if ($LASTEXITCODE -ne 0) {
-                            throw "Docker login failed"
-                        }
+                $token | docker login --username harini2926 --password-stdin
 
-                        Write-Host "Docker login successful"
-                    '''
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Docker login failed"
                 }
-            }
+            '''
         }
+    }
+}
 
         stage('Build Docker Image') {
             steps {
