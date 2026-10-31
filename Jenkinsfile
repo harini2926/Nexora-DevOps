@@ -29,7 +29,7 @@ pipeline {
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'dockerhub-credentials',
+                        credentialsId: 'nexora-docker-login',
                         usernameVariable: 'DH_USER',
                         passwordVariable: 'DH_TOKEN'
                     )
