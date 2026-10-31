@@ -26,6 +26,7 @@ pipeline {
         }
 
         
+
 stage('Login and Push to Docker Hub') {
     steps {
         withCredentials([
@@ -38,26 +39,33 @@ stage('Login and Push to Docker Hub') {
             powershell '''
                 $ErrorActionPreference = "Stop"
 
-                Write-Host "Checking Jenkins credentials..."
+                Write-Host "Starting Docker Hub authentication..."
 
-                Write-Host "Docker Hub username: $env:DH_USER"
-                Write-Host "Token length: $($env:DH_TOKEN.Length)"
+                $docker = (Get-Command docker.exe).Source
 
-                if ($env:DH_USER -ne "harini2926") {
-                    throw "Incorrect Docker Hub username in Jenkins"
-                }
+                $process = New-Object System.Diagnostics.Process
+                $process.StartInfo.FileName = $docker
+                $process.StartInfo.Arguments = "login --username $env:DH_USER --password-stdin"
+                $process.StartInfo.UseShellExecute = $false
+                $process.StartInfo.CreateNoWindow = $true
+                $process.StartInfo.RedirectStandardInput = $true
+                $process.StartInfo.RedirectStandardOutput = $true
+                $process.StartInfo.RedirectStandardError = $true
 
-                if ([string]::IsNullOrEmpty($env:DH_TOKEN)) {
-                    throw "Docker Hub token is empty"
-                }
+                $process.Start()
 
-                Write-Host "Testing Docker Hub login..."
+                $process.StandardInput.WriteLine($env:DH_TOKEN)
+                $process.StandardInput.Close()
 
-                $env:DH_TOKEN | docker login `
-                    --username $env:DH_USER `
-                    --password-stdin
+                $output = $process.StandardOutput.ReadToEnd()
+                $errors = $process.StandardError.ReadToEnd()
 
-                if ($LASTEXITCODE -ne 0) {
+                $process.WaitForExit()
+
+                Write-Host $output
+
+                if ($process.ExitCode -ne 0) {
+                    Write-Host $errors
                     throw "Docker Hub authentication failed"
                 }
 
@@ -72,10 +80,13 @@ stage('Login and Push to Docker Hub') {
                 }
 
                 docker tag $tag $latest
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Docker tag failed"
+                }
 
                 docker push $latest
                 if ($LASTEXITCODE -ne 0) {
-                    throw "Latest image push failed"
+                    throw "Docker latest push failed"
                 }
 
                 Write-Host "Docker images pushed successfully!"
