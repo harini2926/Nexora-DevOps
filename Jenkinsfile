@@ -25,46 +25,66 @@ pipeline {
             }
         }
 
-        stage('Login and Push to Docker Hub') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'nexora-docker-login',
-                        usernameVariable: 'DH_USER',
-                        passwordVariable: 'DH_TOKEN'
-                    )
-                ]) {
-                    powershell '''
-                        $ErrorActionPreference = "Stop"
+        
+stage('Login and Push to Docker Hub') {
+    steps {
+        withCredentials([
+            usernamePassword(
+                credentialsId: 'nexora-docker-test',
+                usernameVariable: 'DH_USER',
+                passwordVariable: 'DH_TOKEN'
+            )
+        ]) {
+            powershell '''
+                $ErrorActionPreference = "Stop"
 
-                        $env:DH_TOKEN | docker login --username $env:DH_USER --password-stdin
-                        if ($LASTEXITCODE -ne 0) {
-                            throw "Docker login failed"
-                        }
+                Write-Host "Checking Jenkins credentials..."
 
-                        $tag = "$($env:DOCKERHUB_REPO):$($env:BUILD_NUMBER)"
-                        $latest = "$($env:DOCKERHUB_REPO):latest"
+                Write-Host "Docker Hub username: $env:DH_USER"
+                Write-Host "Token length: $($env:DH_TOKEN.Length)"
 
-                        docker push $tag
-                        if ($LASTEXITCODE -ne 0) {
-                            throw "Docker push failed"
-                        }
-
-                        docker tag $tag $latest
-                        if ($LASTEXITCODE -ne 0) {
-                            throw "Docker tag failed"
-                        }
-
-                        docker push $latest
-                        if ($LASTEXITCODE -ne 0) {
-                            throw "Docker latest push failed"
-                        }
-
-                        docker logout
-                    '''
+                if ($env:DH_USER -ne "harini2926") {
+                    throw "Incorrect Docker Hub username in Jenkins"
                 }
-            }
+
+                if ([string]::IsNullOrEmpty($env:DH_TOKEN)) {
+                    throw "Docker Hub token is empty"
+                }
+
+                Write-Host "Testing Docker Hub login..."
+
+                $env:DH_TOKEN | docker login `
+                    --username $env:DH_USER `
+                    --password-stdin
+
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Docker Hub authentication failed"
+                }
+
+                Write-Host "Docker Hub authentication successful!"
+
+                $tag = "$($env:DOCKERHUB_REPO):$($env:BUILD_NUMBER)"
+                $latest = "$($env:DOCKERHUB_REPO):latest"
+
+                docker push $tag
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Docker image push failed"
+                }
+
+                docker tag $tag $latest
+
+                docker push $latest
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Latest image push failed"
+                }
+
+                Write-Host "Docker images pushed successfully!"
+
+                docker logout
+            '''
         }
+    }
+}
 
         stage('Deploy to Kubernetes') {
             steps {
