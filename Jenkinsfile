@@ -27,69 +27,52 @@ pipeline {
 
         
 
+
 stage('Login and Push to Docker Hub') {
     steps {
         withCredentials([
-            usernamePassword(
-                credentialsId: 'nexora-docker-test',
-                usernameVariable: 'DH_USER',
-                passwordVariable: 'DH_TOKEN'
+            string(
+                credentialsId: 'nexora-docker-token',
+                variable: 'DH_TOKEN'
             )
         ]) {
             powershell '''
                 $ErrorActionPreference = "Stop"
 
-                Write-Host "Starting Docker Hub authentication..."
+                Write-Host "Logging into Docker Hub..."
 
-                $docker = (Get-Command docker.exe).Source
+                $env:DH_TOKEN | docker login `
+                    --username harini2926 `
+                    --password-stdin
 
-                $process = New-Object System.Diagnostics.Process
-                $process.StartInfo.FileName = $docker
-                $process.StartInfo.Arguments = "login --username $env:DH_USER --password-stdin"
-                $process.StartInfo.UseShellExecute = $false
-                $process.StartInfo.CreateNoWindow = $true
-                $process.StartInfo.RedirectStandardInput = $true
-                $process.StartInfo.RedirectStandardOutput = $true
-                $process.StartInfo.RedirectStandardError = $true
-
-                $process.Start()
-
-                $process.StandardInput.WriteLine($env:DH_TOKEN)
-                $process.StandardInput.Close()
-
-                $output = $process.StandardOutput.ReadToEnd()
-                $errors = $process.StandardError.ReadToEnd()
-
-                $process.WaitForExit()
-
-                Write-Host $output
-
-                if ($process.ExitCode -ne 0) {
-                    Write-Host $errors
-                    throw "Docker Hub authentication failed"
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Docker Hub login failed"
                 }
 
-                Write-Host "Docker Hub authentication successful!"
+                Write-Host "Docker Hub login successful!"
 
                 $tag = "$($env:DOCKERHUB_REPO):$($env:BUILD_NUMBER)"
                 $latest = "$($env:DOCKERHUB_REPO):latest"
 
                 docker push $tag
+
                 if ($LASTEXITCODE -ne 0) {
-                    throw "Docker image push failed"
+                    throw "Docker push failed"
                 }
 
                 docker tag $tag $latest
+
                 if ($LASTEXITCODE -ne 0) {
                     throw "Docker tag failed"
                 }
 
                 docker push $latest
+
                 if ($LASTEXITCODE -ne 0) {
-                    throw "Docker latest push failed"
+                    throw "Latest push failed"
                 }
 
-                Write-Host "Docker images pushed successfully!"
+                Write-Host "Images pushed successfully!"
 
                 docker logout
             '''
