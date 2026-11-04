@@ -1,114 +1,144 @@
 
 pipeline {
+
     agent any
 
-    options {
-        skipDefaultCheckout(true)
-    }
-
     environment {
-        DOCKERHUB_REPO = 'harini2926/nexora-web'
+        IMAGE_REPO = 'harini2926/nexora-web'
+        APP_IMAGE = "${IMAGE_REPO}:${BUILD_NUMBER}"
+        TEST_IMAGE = "nexora-selenium-tests:${BUILD_NUMBER}"
     }
 
     stages {
 
+        // 1. Checkout source code
         stage('Checkout') {
             steps {
+                echo 'Downloading Nexora source code'
                 checkout scm
-                echo 'Nexora source downloaded successfully'
             }
         }
 
-        stage('Docker Login Check') {
-    steps {
-        withCredentials([string(credentialsId: 'nexora-docker-token', variable: 'DH_TOKEN')]) {
-            powershell '''
-                $token = $env:DH_TOKEN.Trim()
-
-                $sha = [Security.Cryptography.SHA256]::Create()
-                $bytes = $sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($token))
-                $hash = [BitConverter]::ToString($bytes).Replace("-", "")
-
-                Write-Host "Jenkins fingerprint: $hash"
-
-                $token | docker login --username harini2926 --password-stdin
-
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Docker login failed"
-                }
-            '''
-        }
-    }
-}
-
+        // 2. Build Docker image
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t "%DOCKERHUB_REPO%:%BUILD_NUMBER%" .'
-
-                bat 'docker tag "%DOCKERHUB_REPO%:%BUILD_NUMBER%" "%DOCKERHUB_REPO%:latest"'
+                bat 'docker build -t %IMAGE_REPO%:%BUILD_NUMBER% .'
             }
         }
 
+        // 3. Selenium automated testing
+        stage('Selenium Testing') {
+            steps {
+                script {
+
+                    bat '''
+                    if not exist test-results mkdir test-results
+
+                    docker network create nexora-ci-net
+
+                    docker run -d --name nexora-ci-app ^
+                    --network nexora-ci-net ^
+                    --network-alias nexora-app ^
+                    %IMAGE_REPO%:%BUILD_NUMBER%
+
+                    docker run -d --name nexora-ci-selenium ^
+                    --network nexora-ci-net ^
+                    --network-alias selenium ^
+                    --shm-size=2g ^
+                    selenium/standalone-chrome:latest
+
+                    docker build -t %TEST_IMAGE% -f tests/Dockerfile tests
+
+                    docker run --rm ^
+                    --network nexora-ci-net ^
+                    -e BASE_URL=http://nexora-app:5000 ^
+                    -e SELENIUM_URL=http://selenium:4444/wd/hub ^
+                    -v "%WORKSPACE%/test-results:/reports" ^
+                    %TEST_IMAGE%
+                    '''
+                }
+            }
+        }
+
+        // 4. Push Docker image
         stage('Push to Docker Hub') {
             steps {
-                bat 'docker push "%DOCKERHUB_REPO%:%BUILD_NUMBER%"'
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DH_USER',
+                        passwordVariable: 'DH_TOKEN'
+                    )
+                ]) {
 
-                bat 'docker push "%DOCKERHUB_REPO%:latest"'
+                    bat '''
+                    echo %DH_TOKEN% | docker login -u %DH_USER% --password-stdin
+
+                    docker push %IMAGE_REPO%:%BUILD_NUMBER%
+
+                    docker tag %IMAGE_REPO%:%BUILD_NUMBER% %IMAGE_REPO%:latest
+
+                    docker push %IMAGE_REPO%:latest
+
+                    docker logout
+                    '''
+                }
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        // 5. Deploy to Kubernetes
+        stage('Kubernetes Deployment') {
             steps {
-                powershell '''
-                    $ErrorActionPreference = "Stop"
 
-                    Write-Host "Deploying Nexora..."
+                withCredentials([
+                    file(
+                        credentialsId: 'kubeconfig-file',
+                        variable: 'KUBECONFIG'
+                    )
+                ]) {
 
-                    kubectl apply -f k8s/pvc.yaml
-                    if ($LASTEXITCODE -ne 0) {
-                        throw "PVC failed"
-                    }
+                    bat '''
+                    kubectl --kubeconfig "%KUBECONFIG%" apply -f k8s/pvc.yaml
 
-                    kubectl apply -f k8s/service.yaml
-                    if ($LASTEXITCODE -ne 0) {
-                        throw "Service failed"
-                    }
+                    kubectl --kubeconfig "%KUBECONFIG%" apply -f k8s/service.yaml
 
-                    $image = "$($env:DOCKERHUB_REPO):$($env:BUILD_NUMBER)"
+                    kubectl --kubeconfig "%KUBECONFIG%" apply -f k8s/deployment.yaml
 
-                    $yaml = Get-Content "k8s/deployment.yaml" -Raw
-                    $yaml = $yaml.Replace("__IMAGE__", $image)
+                    kubectl --kubeconfig "%KUBECONFIG%" set image deployment/nexora-web nexora-web=%IMAGE_REPO%:%BUILD_NUMBER%
 
-                    $yaml | kubectl apply -f -
+                    kubectl --kubeconfig "%KUBECONFIG%" rollout status deployment/nexora-web --timeout=180s
 
-                    if ($LASTEXITCODE -ne 0) {
-                        throw "Deployment failed"
-                    }
+                    kubectl --kubeconfig "%KUBECONFIG%" get pods
 
-                    kubectl rollout status deployment/nexora-web --timeout=180s
-
-                    if ($LASTEXITCODE -ne 0) {
-                        throw "Kubernetes rollout failed"
-                    }
-
-                    Write-Host "NEXORA DEPLOYED SUCCESSFULLY!"
-                '''
+                    kubectl --kubeconfig "%KUBECONFIG%" get services
+                    '''
+                }
             }
         }
-
     }
 
     post {
+
+        always {
+            script {
+                bat 'docker rm -f nexora-ci-app nexora-ci-selenium 2>NUL || exit /b 0'
+                bat 'docker network rm nexora-ci-net 2>NUL || exit /b 0'
+            }
+
+            junit(
+                testResults: 'test-results/results.xml',
+                allowEmptyResults: true
+            )
+        }
+
         success {
-            echo 'SUCCESS: Nexora CI/CD pipeline completed!'
+            echo 'NEXORA PIPELINE SUCCESSFUL!'
+            echo 'Application deployed to Kubernetes.'
         }
 
         failure {
-            echo 'FAILED: Check Console Output'
-        }
-
-        always {
-            echo 'Nexora pipeline execution finished'
+            echo 'NEXORA PIPELINE FAILED!'
+            echo 'Check Jenkins console output.'
         }
     }
 }
