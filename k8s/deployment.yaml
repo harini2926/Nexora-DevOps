@@ -21,7 +21,7 @@ spec:
       containers:
         - name: nexora-web
 
-          image: YOUR_DOCKERHUB_USERNAME/nexora-web:latest
+          image: harini2926/nexora-web:v2
 
           imagePullPolicy: Always
 
