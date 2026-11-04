@@ -1,65 +1,24 @@
+env:
+  - name: SMTP_HOST
+    valueFrom:
+      secretKeyRef:
+        name: nexora-email-secret
+        key: SMTP_HOST
 
-apiVersion: apps/v1
-kind: Deployment
+  - name: SMTP_PORT
+    valueFrom:
+      secretKeyRef:
+        name: nexora-email-secret
+        key: SMTP_PORT
 
-metadata:
-  name: nexora-web
+  - name: SMTP_USER
+    valueFrom:
+      secretKeyRef:
+        name: nexora-email-secret
+        key: SMTP_USER
 
-spec:
-  replicas: 1
-
-  selector:
-    matchLabels:
-      app: nexora-web
-
-  template:
-    metadata:
-      labels:
-        app: nexora-web
-
-    spec:
-      containers:
-        - name: nexora-web
-
-          image: harini2926/nexora-web:v2
-
-          imagePullPolicy: Always
-
-          ports:
-            - containerPort: 5000
-
-          env:
-            - name: PORT
-              value: "5000"
-
-            - name: NEXORA_DESKTOP_ENABLED
-              value: "false"
-
-            - name: FLASK_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: nexora-secrets
-                  key: FLASK_SECRET_KEY
-
-          volumeMounts:
-            - name: database-storage
-              mountPath: /app/database
-
-          readinessProbe:
-            httpGet:
-              path: /healthz
-              port: 5000
-            initialDelaySeconds: 5
-            periodSeconds: 10
-
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 5000
-            initialDelaySeconds: 15
-            periodSeconds: 20
-
-      volumes:
-        - name: database-storage
-          persistentVolumeClaim:
-            claimName: nexora-db-pvc
+  - name: SMTP_PASS
+    valueFrom:
+      secretKeyRef:
+        name: nexora-email-secret
+        key: SMTP_PASS
