@@ -1,24 +1,95 @@
-env:
-  - name: SMTP_HOST
-    valueFrom:
-      secretKeyRef:
-        name: nexora-email-secret
-        key: SMTP_HOST
 
-  - name: SMTP_PORT
-    valueFrom:
-      secretKeyRef:
-        name: nexora-email-secret
-        key: SMTP_PORT
+apiVersion: apps/v1
+kind: Deployment
 
-  - name: SMTP_USER
-    valueFrom:
-      secretKeyRef:
-        name: nexora-email-secret
-        key: SMTP_USER
+metadata:
+  name: nexora-web
+  labels:
+    app: nexora-web
 
-  - name: SMTP_PASS
-    valueFrom:
-      secretKeyRef:
-        name: nexora-email-secret
-        key: SMTP_PASS
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: nexora-web
+
+  template:
+    metadata:
+      labels:
+        app: nexora-web
+
+    spec:
+      containers:
+        - name: nexora-web
+
+          image: harini2926/nexora-web:latest
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 5000
+              name: http
+
+          env:
+            # Flask configuration
+            - name: PORT
+              value: "5000"
+
+            - name: FLASK_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nexora-secrets
+                  key: FLASK_SECRET_KEY
+
+            - name: NEXORA_DESKTOP_ENABLED
+              value: "false"
+
+            # Gmail SMTP configuration
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: nexora-email-secret
+                  key: SMTP_HOST
+
+            - name: SMTP_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: nexora-email-secret
+                  key: SMTP_PORT
+
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nexora-email-secret
+                  key: SMTP_USER
+
+            - name: SMTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: nexora-email-secret
+                  key: SMTP_PASS
+
+          # Application health checks
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5000
+            initialDelaySeconds: 20
+            periodSeconds: 20
+
+          # Persistent database storage
+          volumeMounts:
+            - name: nexora-database
+              mountPath: /app/database
+
+      volumes:
+        - name: nexora-database
+          persistentVolumeClaim:
+            claimName: nexora-db-pvc
