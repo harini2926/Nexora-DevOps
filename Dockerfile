@@ -1,3 +1,4 @@
+
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -5,8 +6,6 @@ WORKDIR /app
 COPY front2/ /app/
 
 RUN pip install --no-cache-dir -r requirements.txt
-
-RUN python -m compileall -q /app
 
 RUN mkdir -p /app/database
 
